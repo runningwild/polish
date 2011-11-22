@@ -1,4 +1,4 @@
-package fft_test
+package polish_test
 
 import (
   . "gospec"
