@@ -3,7 +3,7 @@
 
 include $(GOROOT)/src/Make.inc
 
-TARG=github.com/runningwild/polish
+TARG=github.com/runningwild/polish/polish
 GOFILES=\
 	polish.go\
 
