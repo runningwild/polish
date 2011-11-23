@@ -57,17 +57,17 @@ func (c *Context) subEval(scan *scanner.Scanner) (vs []reflect.Value, err error)
       if err != nil {
         return
       }
-      for _,result := range results {
+      for _, result := range results {
         args = append(args, result)
       }
     }
     var remaining []reflect.Value
     if len(args) > f.num {
-      remaining = args[f.num : ]
-      args = args[0 : f.num]
+      remaining = args[f.num:]
+      args = args[0:f.num]
     }
     vs = f.f.Call(args)
-    for _,v := range remaining {
+    for _, v := range remaining {
       vs = append(vs, v)
     }
     return
@@ -110,7 +110,7 @@ func (c *Context) Eval(expression string) (v reflect.Value, err error) {
     return
   }
   if len(res) != 1 {
-    err = &Error{ fmt.Sprintf("Only one value should remain on the stack after evaluation, found %d.", len(res)) }
+    err = &Error{fmt.Sprintf("Only one value should remain on the stack after evaluation, found %d.", len(res))}
     return
   }
   v = res[0]

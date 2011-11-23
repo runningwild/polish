@@ -43,12 +43,12 @@ func MultiValueReturnSpec(c gospec.Context) {
   c.Specify("Functions with zero or more than one return values work.", func() {
     context := polish.MakeContext()
     polish.AddIntMathContext(context)
-    rev3 := func(a,b,c int) (int,int,int) {
-      return c,b,a
+    rev3 := func(a, b, c int) (int, int, int) {
+      return c, b, a
     }
     context.AddFunc("rev3", rev3)
-    rev5 := func(a,b,c,d,e int) (int,int,int,int,int) {
-      return e,d,c,b,a
+    rev5 := func(a, b, c, d, e int) (int, int, int, int, int) {
+      return e, d, c, b, a
     }
     context.AddFunc("rev5", rev5)
 
@@ -63,5 +63,20 @@ func MultiValueReturnSpec(c gospec.Context) {
     // - -4 6
     // -10
     c.Expect(int(res.Int()), Equals, -10)
+  })
+}
+
+func ErrorSpec(c gospec.Context) {
+  c.Specify("Type-mismatch panics are caught and returned as errors.", func() {
+    context := polish.MakeContext()
+    polish.AddIntMathContext(context)
+    _, err := context.Eval("+ 1.0 2.0")
+    c.Assume(err.Error(), Not(Equals), nil)
+  })
+  c.Specify("Panics from inside functions are caught and returned as errors.", func() {
+    context := polish.MakeContext()
+    context.AddFunc("panic", func() { panic("rawr") })
+    _, err := context.Eval("panic")
+    c.Assume(err.Error(), Not(Equals), nil)
   })
 }
