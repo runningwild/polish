@@ -18,7 +18,7 @@ func (e *Error) Error() string {
 }
 
 type function struct {
-  // An arbitrary function that must have exactly one return value
+  // An arbitrary function
   f reflect.Value
 
   // The number of input values for the above function
@@ -46,24 +46,33 @@ type Context struct {
   vals  map[string]reflect.Value
 }
 
-func (c *Context) subEval(scan *scanner.Scanner) (v reflect.Value, err error) {
+func (c *Context) subEval(scan *scanner.Scanner) (vs []reflect.Value, err error) {
   scan.Scan()
   token := scan.TokenText()
   if f, ok := c.funcs[token]; ok {
     var args []reflect.Value
-    for i := 0; i < f.num; i++ {
-      var result reflect.Value
-      result, err = c.subEval(scan)
+    for len(args) < f.num {
+      var results []reflect.Value
+      results, err = c.subEval(scan)
       if err != nil {
         return
       }
-      args = append(args, result)
+      for _,result := range results {
+        args = append(args, result)
+      }
     }
-    res := f.f.Call(args)
-    v = res[0]
+    var remaining []reflect.Value
+    if len(args) > f.num {
+      remaining = args[f.num : ]
+      args = args[0 : f.num]
+    }
+    vs = f.f.Call(args)
+    for _,v := range remaining {
+      vs = append(vs, v)
+    }
     return
   } else if val, ok := c.vals[token]; ok {
-    v = val
+    vs = append(vs, val)
     return
   }
   fval, e := strconv.Atoi(token)
@@ -73,9 +82,9 @@ func (c *Context) subEval(scan *scanner.Scanner) (v reflect.Value, err error) {
       err = e
       return
     }
-    v = reflect.ValueOf(ival)
+    vs = append(vs, reflect.ValueOf(ival))
   } else {
-    v = reflect.ValueOf(fval)
+    vs = append(vs, reflect.ValueOf(fval))
   }
   return
 }
@@ -95,11 +104,21 @@ func (c *Context) Eval(expression string) (v reflect.Value, err error) {
   }()
   var scan scanner.Scanner
   scan.Init(bytes.NewBufferString(expression))
-  return c.subEval(&scan)
+  var res []reflect.Value
+  res, err = c.subEval(&scan)
+  if err != nil {
+    return
+  }
+  if len(res) != 1 {
+    err = &Error{ fmt.Sprintf("Only one value should remain on the stack after evaluation, found %d.", len(res)) }
+    return
+  }
+  v = res[0]
+  return
 }
 
-// Adds a function that can be used in future calls to Eval.  f must have
-// exactly one output.  Functions cannot be reassigned.
+// Adds a function that can be used in future calls to Eval.  Functions cannot
+// be reassigned.
 func (c *Context) AddFunc(name string, f interface{}) error {
   typ := reflect.TypeOf(f)
   if typ.Kind() != reflect.Func {

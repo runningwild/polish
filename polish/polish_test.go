@@ -38,3 +38,30 @@ func IntContextSpec(c gospec.Context) {
     c.Expect(res.Bool(), Equals, v1 < v2)
   })
 }
+
+func MultiValueReturnSpec(c gospec.Context) {
+  c.Specify("Functions with zero or more than one return values work.", func() {
+    context := polish.MakeContext()
+    polish.AddIntMathContext(context)
+    rev3 := func(a,b,c int) (int,int,int) {
+      return c,b,a
+    }
+    context.AddFunc("rev3", rev3)
+    rev5 := func(a,b,c,d,e int) (int,int,int,int,int) {
+      return e,d,c,b,a
+    }
+    context.AddFunc("rev5", rev5)
+
+    res, err := context.Eval("- - - - rev5 rev3 1 2 rev3 4 5 6")
+    c.Assume(err, Equals, nil)
+    // - - - - rev5 rev3 1 2 rev3 4 5 6
+    // - - - - rev5 rev3 1 2 6 5 4
+    // - - - - rev5 6 2 1 5 4
+    // - - - - 4 5 1 2 6
+    // - - - -1 1 2 6
+    // - - -2 2 6
+    // - -4 6
+    // -10
+    c.Expect(int(res.Int()), Equals, -10)
+  })
+}
