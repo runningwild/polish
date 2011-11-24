@@ -11,5 +11,6 @@ func TestAllSpecs(t *testing.T) {
   r.AddSpec(IntContextSpec)
   r.AddSpec(MultiValueReturnSpec)
   r.AddSpec(ErrorSpec)
+  r.AddSpec(IntOperatorSpec)
   gospec.MainGoTest(r, t)
 }

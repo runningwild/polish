@@ -1,9 +1,8 @@
 package polish
 
 import (
-  "scanner"
+  "strings"
   "fmt"
-  "bytes"
   "strconv"
   "reflect"
   "math"
@@ -44,16 +43,17 @@ type function struct {
 type Context struct {
   funcs map[string]function
   vals  map[string]reflect.Value
+  terms []string
 }
 
-func (c *Context) subEval(scan *scanner.Scanner) (vs []reflect.Value, err error) {
-  scan.Scan()
-  token := scan.TokenText()
-  if f, ok := c.funcs[token]; ok {
+func (c *Context) subEval() (vs []reflect.Value, err error) {
+  term := c.terms[0]
+  c.terms = c.terms[1:]
+  if f, ok := c.funcs[term]; ok {
     var args []reflect.Value
     for len(args) < f.num {
       var results []reflect.Value
-      results, err = c.subEval(scan)
+      results, err = c.subEval()
       if err != nil {
         return
       }
@@ -71,13 +71,13 @@ func (c *Context) subEval(scan *scanner.Scanner) (vs []reflect.Value, err error)
       vs = append(vs, v)
     }
     return
-  } else if val, ok := c.vals[token]; ok {
+  } else if val, ok := c.vals[term]; ok {
     vs = append(vs, val)
     return
   }
-  fval, e := strconv.Atoi(token)
+  fval, e := strconv.Atoi(term)
   if e != nil {
-    ival, e := strconv.Atof64(token)
+    ival, e := strconv.Atof64(term)
     if e != nil {
       err = e
       return
@@ -102,10 +102,15 @@ func (c *Context) Eval(expression string) (v reflect.Value, err error) {
       }
     }
   }()
-  var scan scanner.Scanner
-  scan.Init(bytes.NewBufferString(expression))
+  raw_terms := strings.Split(expression, " ")
+  c.terms = nil
+  for _, term := range raw_terms {
+    if len(term) > 0 {
+      c.terms = append(c.terms, term)
+    }
+  }
   var res []reflect.Value
-  res, err = c.subEval(&scan)
+  res, err = c.subEval()
   if err != nil {
     return
   }

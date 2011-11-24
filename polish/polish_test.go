@@ -80,3 +80,46 @@ func ErrorSpec(c gospec.Context) {
     c.Assume(err.Error(), Not(Equals), nil)
   })
 }
+
+func IntOperatorSpec(c gospec.Context) {
+  c.Specify("All standard int operators parse.", func() {
+    context := polish.MakeContext()
+    polish.AddIntMathContext(context)
+    c.Specify("+ works", func() {
+      _, err := context.Eval("+ 1 2")
+      c.Assume(err, Equals, nil)
+    })
+    c.Specify("- works", func() {
+      _, err := context.Eval("- 1 2")
+      c.Assume(err, Equals, nil)
+    })
+    c.Specify("* works", func() {
+      _, err := context.Eval("* 1 2")
+      c.Assume(err, Equals, nil)
+    })
+    c.Specify("/ works", func() {
+      _, err := context.Eval("/ 1 2")
+      c.Assume(err, Equals, nil)
+    })
+    c.Specify("< works", func() {
+      _, err := context.Eval("< 1 2")
+      c.Assume(err, Equals, nil)
+    })
+    c.Specify("<= works", func() {
+      _, err := context.Eval("<= 1 2")
+      c.Assume(err, Equals, nil)
+    })
+    c.Specify("> works", func() {
+      _, err := context.Eval("> 1 2")
+      c.Assume(err, Equals, nil)
+    })
+    c.Specify(">= works", func() {
+      _, err := context.Eval(">= 1 2")
+      c.Assume(err, Equals, nil)
+    })
+    c.Specify("== works", func() {
+      _, err := context.Eval("== 1 2")
+      c.Assume(err, Equals, nil)
+    })
+  })
+}
