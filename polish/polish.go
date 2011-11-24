@@ -92,7 +92,7 @@ func (c *Context) subEval() (vs []reflect.Value, err error) {
 // Evaluates a Polish notation expression using functions and values that have
 // been specified using AddFunc and SetValue.
 // Constants are interpreted as int if possible, otherwise float64.
-func (c *Context) Eval(expression string) (v reflect.Value, err error) {
+func (c *Context) Eval(expression string) (vs []reflect.Value, err error) {
   defer func() {
     if r := recover(); r != nil {
       if e, ok := r.(error); ok {
@@ -109,16 +109,10 @@ func (c *Context) Eval(expression string) (v reflect.Value, err error) {
       c.terms = append(c.terms, term)
     }
   }
-  var res []reflect.Value
-  res, err = c.subEval()
+  vs, err = c.subEval()
   if err != nil {
     return
   }
-  if len(res) != 1 {
-    err = &Error{fmt.Sprintf("Only one value should remain on the stack after evaluation, found %d.", len(res))}
-    return
-  }
-  v = res[0]
   return
 }
 
