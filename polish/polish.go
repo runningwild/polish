@@ -77,7 +77,7 @@ func (c *Context) subEval() (vs []reflect.Value, err error) {
   }
   fval, e := strconv.Atoi(term)
   if e != nil {
-    ival, e := strconv.Atof64(term)
+    ival, e := strconv.ParseFloat(term, 64)
     if e != nil {
       err = e
       return
@@ -93,12 +93,14 @@ func (c *Context) subEval() (vs []reflect.Value, err error) {
 // been specified using AddFunc and SetValue.
 // Constants are interpreted as int if possible, otherwise float64.
 func (c *Context) Eval(expression string) (vs []reflect.Value, err error) {
+  // fmt.Printf("(polish) Evaluation: %s\n", expression)
+  // defer fmt.Printf("(polish) Completed: %s\n", expression)
   defer func() {
     if r := recover(); r != nil {
       if e, ok := r.(error); ok {
-        err = &Error{fmt.Sprintf("Failed to evaluate: %s.", e.Error())}
+        err = &Error{fmt.Sprintf("Failed to evaluate (%s): %s.", expression, e.Error())}
       } else {
-        err = &Error{fmt.Sprintf("Failed to evaluate: %v.", r)}
+        err = &Error{fmt.Sprintf("Failed to evaluate (%s): %v.", expression, r)}
       }
     }
   }()
