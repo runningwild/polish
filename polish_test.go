@@ -1,10 +1,10 @@
 package polish_test
 
 import (
-  . "gospec"
-  "gospec"
+  . "github.com/orfjackal/gospec/src/gospec"
+  "github.com/orfjackal/gospec/src/gospec"
   "math"
-  "polish"
+  "github.com/runningwild/polish"
 )
 
 func Float64ContextSpec(c gospec.Context) {
