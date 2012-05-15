@@ -136,6 +136,25 @@ func ParsingSpec(c gospec.Context) {
   })
 }
 
+func ParseOrderSpec(c gospec.Context) {
+  c.Specify("Parse order can be changed.", func() {
+    context := polish.MakeContext()
+    polish.AddFloat64MathContext(context)
+    context.SetParseOrder(polish.Float)  // Only parse as floats
+    res, err := context.Eval("    +           1                      3")
+    c.Assume(len(res), Equals, 1)
+    c.Assume(err, Equals, nil)
+    c.Expect(res[0].Float(), Equals, 4.0)
+
+    context = polish.MakeContext()
+    polish.AddIntMathContext(context)
+    context.SetParseOrder(polish.Float)  // Only parse as floats
+    res, err = context.Eval("    +           1                      3")
+    c.Assume(len(res), Equals, 0)
+    c.Assume(err, Not(Equals), nil)
+  })
+}
+
 func IntOperatorSpec(c gospec.Context) {
   c.Specify("All standard int operators parse.", func() {
     context := polish.MakeContext()

@@ -14,6 +14,7 @@ func TestAllSpecs(t *testing.T) {
   r.AddSpec(ErrorSpec)
   r.AddSpec(NumRemainingValuesSpec)
   r.AddSpec(ParsingSpec)
+  r.AddSpec(ParseOrderSpec)
   r.AddSpec(IntOperatorSpec)
   gospec.MainGoTest(r, t)
 }

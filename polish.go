@@ -44,7 +44,16 @@ type Context struct {
   funcs map[string]function
   vals  map[string]reflect.Value
   terms []string
+  parse_order []Type
 }
+
+type Type int
+const(
+  Integer Type = iota
+  Float
+  String
+)
+
 
 func (c *Context) subEval() (vs []reflect.Value, err error) {
   term := c.terms[0]
@@ -75,17 +84,35 @@ func (c *Context) subEval() (vs []reflect.Value, err error) {
     vs = append(vs, val)
     return
   }
-  fval, e := strconv.Atoi(term)
-  if e != nil {
-    ival, e := strconv.ParseFloat(term, 64)
-    if e != nil {
-      err = e
-      return
+  var val reflect.Value
+  for _, v := range c.parse_order {
+    switch v {
+    case Integer:
+      ival, e := strconv.Atoi(term)
+      if e == nil {
+        val = reflect.ValueOf(ival)
+      }
+
+    case Float:
+      fval, e := strconv.ParseFloat(term, 64)
+      if e == nil {
+        val = reflect.ValueOf(fval)
+      }
+
+    case String:
+      val = reflect.ValueOf(term)
+
+    default:
+      return nil, &Error{fmt.Sprintf("Unknown polish.Value: %v", v)}
     }
-    vs = append(vs, reflect.ValueOf(ival))
-  } else {
-    vs = append(vs, reflect.ValueOf(fval))
+    if val != (reflect.Value{}) {
+      break
+    }
   }
+  if val == (reflect.Value{}) {
+    return nil, &Error{fmt.Sprintf("Unable to parse term: '%s'", term)}
+  }
+  vs = append(vs, val)
   return
 }
 
@@ -148,11 +175,22 @@ func (c *Context) SetValue(name string, v interface{}) error {
   return nil
 }
 
+// Sets the order in which to attempt to parse terms.  The default order is
+// Integer, Float, String.  You may want to specify that the order should be
+// Float, String, for example, if you always want to deal with floating points
+// without having to always specify a decimal point.
+// String can parse anything, so if it comes before either Integer or Float
+// then nothing will ever be parsed as those Types.
+func (c *Context) SetParseOrder(types ...Type) {
+  c.parse_order = types
+}
+
 // Makes a new Context with no functions or values.
 func MakeContext() *Context {
   return &Context{
     funcs: make(map[string]function),
     vals:  make(map[string]reflect.Value),
+    parse_order: []Type{Integer, Float, String},
   }
 }
 
