@@ -156,6 +156,19 @@ func MakeContext() *Context {
   }
 }
 
+// Adds some basic boolean operators
+//   Functions: && (logical and)
+//              || (logical or)
+//              ^^ (logical xor)
+//              !  (logical not)
+//   Constants: pi e
+func AddBooleanContext(c *Context) {
+  c.AddFunc("&&", func(a, b bool) bool { return a && b })
+  c.AddFunc("||", func(a, b bool) bool { return a || b })
+  c.AddFunc("^^", func(a, b bool) bool { return (a && !b) || (!a && b) })
+  c.AddFunc("!", func(a bool) bool { return !a })
+}
+
 // Adds several operators and constants to the Context, all of which use float64
 // for any numerical values.  
 //   Functions: + - * / ^ ln log2 log10 < <= > >= ==

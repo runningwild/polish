@@ -23,6 +23,30 @@ func Float64ContextSpec(c gospec.Context) {
   })
 }
 
+func Float64AndBooleanContextSpec(c gospec.Context) {
+  c.Specify("Boolean context works properly with a float64 context.", func() {
+    context := polish.MakeContext()
+    polish.AddFloat64MathContext(context)
+    polish.AddBooleanContext(context)
+    res, err := context.Eval("&& < e pi >= log2 pi log2 e")
+    c.Assume(len(res), Equals, 1)
+    c.Assume(err, Equals, nil)
+    c.Expect(res[0].Bool(), Equals, true)
+    res, err = context.Eval("^^ < 3.0 4.0 < 4.0 3.0")
+    c.Assume(len(res), Equals, 1)
+    c.Assume(err, Equals, nil)
+    c.Expect(res[0].Bool(), Equals, true)
+    res, err = context.Eval("^^ < 3.0 4.0 < 3.0 4.0")
+    c.Assume(len(res), Equals, 1)
+    c.Assume(err, Equals, nil)
+    c.Expect(res[0].Bool(), Equals, false)
+    res, err = context.Eval("! ^^ < 3.0 4.0 < 3.0 4.0")
+    c.Assume(len(res), Equals, 1)
+    c.Assume(err, Equals, nil)
+    c.Expect(res[0].Bool(), Equals, true)
+  })
+}
+
 func IntContextSpec(c gospec.Context) {
   c.Specify("Int context works properly.", func() {
     context := polish.MakeContext()
