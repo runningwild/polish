@@ -6,10 +6,14 @@ import (
   "strconv"
   "reflect"
   "math"
+  "runtime/debug"
 )
 
 type Error struct {
   ErrorString string
+
+  // Stack trace where the error occurred, if available
+  Stack []byte
 }
 
 func (e *Error) Error() string {
@@ -53,7 +57,6 @@ const(
   Float
   String
 )
-
 
 func (c *Context) subEval() (vs []reflect.Value, err error) {
   term := c.terms[0]
@@ -103,14 +106,14 @@ func (c *Context) subEval() (vs []reflect.Value, err error) {
       val = reflect.ValueOf(term)
 
     default:
-      return nil, &Error{fmt.Sprintf("Unknown polish.Value: %v", v)}
+      return nil, &Error{fmt.Sprintf("Unknown polish.Value: %v", v), nil}
     }
     if val != (reflect.Value{}) {
       break
     }
   }
   if val == (reflect.Value{}) {
-    return nil, &Error{fmt.Sprintf("Unable to parse term: '%s'", term)}
+    return nil, &Error{fmt.Sprintf("Unable to parse term: '%s'", term), nil}
   }
   vs = append(vs, val)
   return
@@ -120,15 +123,16 @@ func (c *Context) subEval() (vs []reflect.Value, err error) {
 // been specified using AddFunc and SetValue.
 // Constants are interpreted as int if possible, otherwise float64.
 func (c *Context) Eval(expression string) (vs []reflect.Value, err error) {
-  // fmt.Printf("(polish) Evaluation: %s\n", expression)
-  // defer fmt.Printf("(polish) Completed: %s\n", expression)
   defer func() {
     if r := recover(); r != nil {
+      var local_err Error
       if e, ok := r.(error); ok {
-        err = &Error{fmt.Sprintf("Failed to evaluate (%s): %s.", expression, e.Error())}
+        local_err.ErrorString = fmt.Sprintf("Failed to evaluate (%s): %s.", expression, e.Error())
       } else {
-        err = &Error{fmt.Sprintf("Failed to evaluate (%s): %v.", expression, r)}
+        local_err.ErrorString = fmt.Sprintf("Failed to evaluate (%s): %v.", expression, r)
       }
+      local_err.Stack = debug.Stack()
+      err = &local_err
     }
   }()
   raw_terms := strings.Split(expression, " ")
@@ -150,13 +154,13 @@ func (c *Context) Eval(expression string) (vs []reflect.Value, err error) {
 func (c *Context) AddFunc(name string, f interface{}) error {
   typ := reflect.TypeOf(f)
   if typ.Kind() != reflect.Func {
-    return &Error{fmt.Sprintf("Tried to add a %v instead of a function.", typ)}
+    return &Error{fmt.Sprintf("Tried to add a %v instead of a function.", typ), nil}
   }
   if _, ok := c.funcs[name]; ok {
-    return &Error{fmt.Sprintf("Tried to add the function '%s' more than once.", name)}
+    return &Error{fmt.Sprintf("Tried to add the function '%s' more than once.", name), nil}
   }
   if _, ok := c.vals[name]; ok {
-    return &Error{fmt.Sprintf("Tried to give the name '%s' to a function and a value.", name)}
+    return &Error{fmt.Sprintf("Tried to give the name '%s' to a function and a value.", name), nil}
   }
   c.funcs[name] = function{
     f:   reflect.ValueOf(f),
@@ -169,7 +173,7 @@ func (c *Context) AddFunc(name string, f interface{}) error {
 // reassigned
 func (c *Context) SetValue(name string, v interface{}) error {
   if _, ok := c.funcs[name]; ok {
-    return &Error{fmt.Sprintf("Tried to give the name '%s' to a function and a value.", name)}
+    return &Error{fmt.Sprintf("Tried to give the name '%s' to a function and a value.", name), nil}
   }
   c.vals[name] = reflect.ValueOf(v)
   return nil
