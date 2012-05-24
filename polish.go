@@ -135,7 +135,7 @@ func (c *Context) Eval(expression string) (vs []reflect.Value, err error) {
       err = &local_err
     }
   }()
-  raw_terms := strings.Split(expression, " ")
+  raw_terms := strings.Fields(expression)
   c.terms = nil
   for _, term := range raw_terms {
     if len(term) > 0 {
